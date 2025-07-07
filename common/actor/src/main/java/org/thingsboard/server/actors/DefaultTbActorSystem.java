@@ -42,6 +42,7 @@ public class DefaultTbActorSystem implements TbActorSystem {
     private final ConcurrentMap<TbActorId, TbActorMailbox> actors = new ConcurrentHashMap<>();
     private final ConcurrentMap<TbActorId, ReentrantLock> actorCreationLocks = new ConcurrentHashMap<>();
     private final ConcurrentMap<TbActorId, Set<TbActorId>> parentChildMap = new ConcurrentHashMap<>();
+    private final TbActorMonitor monitor;
 
     @Getter
     private final TbActorSystemSettings settings;
@@ -49,7 +50,12 @@ public class DefaultTbActorSystem implements TbActorSystem {
     private final ScheduledExecutorService scheduler;
 
     public DefaultTbActorSystem(TbActorSystemSettings settings) {
+        this(settings, new SimpleActorMonitor());
+    }
+
+    public DefaultTbActorSystem(TbActorSystemSettings settings, TbActorMonitor monitor) {
         this.settings = settings;
+        this.monitor = monitor != null ? monitor : new SimpleActorMonitor();
         this.scheduler = ThingsBoardExecutors.newScheduledThreadPool(settings.getSchedulerPoolSize(), "actor-system-scheduler");
     }
 
@@ -116,6 +122,11 @@ public class DefaultTbActorSystem implements TbActorSystem {
                     actors.put(actorId, mailbox);
                     mailbox.initActor();
                     actorMailbox = mailbox;
+                    try {
+                        monitor.onActorCreated(actorId);
+                    } catch (Exception e) {
+                        log.warn("Failed to monitor actor creation", e);
+                    }
                     if (parent != null) {
                         parentChildMap.computeIfAbsent(parent, id -> ConcurrentHashMap.newKeySet()).add(actorId);
                     }
@@ -145,10 +156,20 @@ public class DefaultTbActorSystem implements TbActorSystem {
         if (mailbox == null) {
             throw new TbActorNotRegisteredException(target, "Actor with id [" + target + "] is not registered!");
         }
-        if (highPriority) {
-            mailbox.tellWithHighPriority(actorMsg);
-        } else {
-            mailbox.tell(actorMsg);
+        try {
+            if (highPriority) {
+                mailbox.tellWithHighPriority(actorMsg);
+            } else {
+                mailbox.tell(actorMsg);
+            }
+            monitor.onMessageProcessed(target, actorMsg);
+        } catch (Exception e) {
+            try {
+                monitor.onMessageFailed(target, actorMsg, e);
+            } catch (Exception ex) {
+                log.warn("Failed to monitor message failure", ex);
+            }
+            throw e;
         }
     }
 
@@ -209,6 +230,11 @@ public class DefaultTbActorSystem implements TbActorSystem {
         TbActorMailbox mailbox = actors.remove(actorId);
         if (mailbox != null) {
             mailbox.destroy(null);
+            try {
+                monitor.onActorStopped(actorId);
+            } catch (Exception e) {
+                log.warn("Failed to monitor actor stop", e);
+            }
         }
     }
 

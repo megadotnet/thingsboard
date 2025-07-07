@@ -177,12 +177,12 @@
         <module>common</module>
         <module>rule-engine</module>
         <module>dao</module>
-        <module>edqs</module>
+        <!--module>edqs</module-->
         <module>transport</module>
-        <module>ui-ngx</module>
+        <!--module>ui-ngx</module-->
         <module>tools</module>
         <module>application</module>
-        <module>msa</module>
+        <!--module>msa</module-->
         <module>rest-client</module>
         <module>monitoring</module>
     </modules>
@@ -535,6 +535,7 @@
                             <groupId>org.thingsboard</groupId>
                             <artifactId>gradle-maven-plugin</artifactId>
                             <configuration>
+                                <gradleDistributionUrl>https://mirrors.cloud.tencent.com/gradle/gradle-8.6-bin.zip</gradleDistributionUrl>
                                 <gradleProjectDirectory>${main.dir}/packaging/${pkg.type}</gradleProjectDirectory>
                                 <tasks>
                                     <task>build</task>
@@ -671,7 +672,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.12</version>
+                    <version>1.0.14</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
