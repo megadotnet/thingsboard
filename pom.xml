@@ -182,7 +182,7 @@
         <module>ui-ngx</module>
         <module>tools</module>
         <module>application</module>
-        <!--module>msa</module-->
+        <module>msa</module>
         <module>rest-client</module>
         <module>monitoring</module>
     </modules>
