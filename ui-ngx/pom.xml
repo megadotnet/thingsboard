@@ -87,6 +87,7 @@
                         <configuration>
                             <installDirectory>target</installDirectory>
                             <workingDirectory>${basedir}</workingDirectory>
+							<downloadRoot>https://registry.npmmirror.com/</downloadRoot>
                         </configuration>
                         <executions>
                             <execution>

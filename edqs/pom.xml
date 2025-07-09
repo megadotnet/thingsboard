@@ -171,18 +171,18 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            <!--plugin>
+            <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
-            </plugin-->
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
             </plugin>
-            <!--plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
-            </plugin-->
+            </plugin>
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
@@ -201,16 +201,6 @@
         </plugins>
     </build>
     <repositories>
-        <!-- 添加 Gradle 官方仓库 -->
-        <repository>
-            <id>gradle-plugins</id>
-            <url>https://plugins.gradle.org/m2/</url>
-        </repository>
-        <!-- 其他仓库（如阿里云镜像） -->
-        <repository>
-            <id>aliyunmaven</id>
-            <url>https://maven.aliyun.com/repository/public</url>
-        </repository>
         <repository>
             <id>jenkins</id>
             <name>Jenkins Repository</name>
