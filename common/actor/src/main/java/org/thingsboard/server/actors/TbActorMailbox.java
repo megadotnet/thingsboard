@@ -25,11 +25,12 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbActorStopReason;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import org.thingsboard.server.actors.internal.queue.MailboxQueue;
+import org.thingsboard.server.actors.internal.queue.TwoLevelPriorityQueue;
 
 @Slf4j
 @Getter
@@ -50,8 +51,7 @@ public final class TbActorMailbox implements TbActorCtx {
     private final TbActorRef parentRef;
     private final TbActor actor;
     private final Dispatcher dispatcher;
-    private final ConcurrentLinkedQueue<TbActorMsg> highPriorityMsgs = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<TbActorMsg> normalPriorityMsgs = new ConcurrentLinkedQueue<>();
+    private final MailboxQueue queue = new TwoLevelPriorityQueue();
     private final AtomicBoolean busy = new AtomicBoolean(FREE);
     private final AtomicBoolean ready = new AtomicBoolean(NOT_READY);
     private final AtomicBoolean destroyInProgress = new AtomicBoolean();
@@ -105,11 +105,7 @@ public final class TbActorMailbox implements TbActorCtx {
 
     private void enqueue(TbActorMsg msg, boolean highPriority) {
         if (!destroyInProgress.get()) {
-            if (highPriority) {
-                highPriorityMsgs.add(msg);
-            } else {
-                normalPriorityMsgs.add(msg);
-            }
+            queue.offer(msg, highPriority);
             tryProcessQueue(true);
         } else {
             if (highPriority && msg.getMsgType().equals(MsgType.RULE_NODE_UPDATED_MSG)) {
@@ -130,7 +126,7 @@ public final class TbActorMailbox implements TbActorCtx {
 
     private void tryProcessQueue(boolean newMsg) {
         if (ready.get() == READY) {
-            if (newMsg || !highPriorityMsgs.isEmpty() || !normalPriorityMsgs.isEmpty()) {
+            if (newMsg || !queue.isEmpty()) {
                 if (busy.compareAndSet(FREE, BUSY)) {
                     dispatcher.getExecutor().execute(this::processMailbox);
                 } else {
@@ -147,10 +143,7 @@ public final class TbActorMailbox implements TbActorCtx {
     private void processMailbox() {
         boolean noMoreElements = false;
         for (int i = 0; i < settings.getActorThroughput(); i++) {
-            TbActorMsg msg = highPriorityMsgs.poll();
-            if (msg == null) {
-                msg = normalPriorityMsgs.poll();
-            }
+            TbActorMsg msg = queue.poll();
             if (msg != null) {
                 try {
                     log.trace("[{}] Going to process message: {}", selfId, msg);
@@ -237,14 +230,7 @@ public final class TbActorMailbox implements TbActorCtx {
             try {
                 ready.set(NOT_READY);
                 actor.destroy(stopReason, cause);
-                highPriorityMsgs.removeIf(msg -> {
-                    msg.onTbActorStopped(stopReason);
-                    return true;
-                });
-                normalPriorityMsgs.removeIf(msg -> {
-                    msg.onTbActorStopped(stopReason);
-                    return true;
-                });
+                queue.clearAndNotify(m -> m.onTbActorStopped(stopReason));
             } catch (Throwable t) {
                 log.warn("[{}] Failed to destroy actor: ", selfId, t);
             }
