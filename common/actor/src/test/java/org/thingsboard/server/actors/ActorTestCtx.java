@@ -22,7 +22,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Data
 @AllArgsConstructor
 public class ActorTestCtx {
 
@@ -30,6 +29,22 @@ public class ActorTestCtx {
     private final AtomicInteger invocationCount;
     private final int expectedInvocationCount;
     private final AtomicLong actual;
+
+    public CountDownLatch getLatch() {
+        return latch;
+    }
+
+    public AtomicInteger getInvocationCount() {
+        return invocationCount;
+    }
+
+    public int getExpectedInvocationCount() {
+        return expectedInvocationCount;
+    }
+
+    public AtomicLong getActual() {
+        return actual;
+    }
 
     public void clear() {
         latch = new CountDownLatch(1);
