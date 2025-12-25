@@ -773,6 +773,7 @@ spring.mvc.cors:
 
 # General spring parameters
 spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
+spring.threads.virtual.enabled: "true" # Enable Java 21 Virtual Threads
 spring.freemarker.checkTemplateLocation: "false" # spring freemarker configuration
 spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:30000}" # The default timeout for asynchronous requests in milliseconds
 spring.mvc.pathmatch.matching-strategy: "ANT_PATH_MATCHER" # For endpoints matching in Swagger
